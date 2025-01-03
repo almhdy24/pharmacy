@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pharmacy Management System</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100">
+    <div id="app" class="p-4">
+        <h1 class="text-xl font-bold text-center mb-5">Pharmacy Management System</h1>
+        
+        <div class="flex justify-between mb-4">
+            <button onclick="showSection('sales')" class="bg-blue-500 text-white px-4 py-2 rounded">Sales</button>
+            <button onclick="showSection('purchases')" class="bg-green-500 text-white px-4 py-2 rounded">Purchases</button>
+            <button onclick="showSection('reports')" class="bg-purple-500 text-white px-4 py-2 rounded">Reports</button>
+        </div>
+
+        <div id="sales" class="section hidden">
+            <h2 class="text-lg font-semibold mb-2">Sales Record</h2>
+            <form id="sales-form" onsubmit="addSale(event)">
+                <input type="text" id="sale-drug-name" placeholder="Drug Name" required class="border rounded px-2 py-1 mb-2 w-full"/>
+                <input type="number" id="sale-quantity" placeholder="Quantity Sold" required class="border rounded px-2 py-1 mb-2 w-full"/>
+                <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">Add Sale</button>
+            </form>
+            <ul id="sales-list" class="mt-4"></ul>
+        </div>
+
+        <div id="purchases" class="section hidden">
+            <h2 class="text-lg font-semibold mb-2">Purchase Record</h2>
+            <form id="purchase-form" onsubmit="addPurchase(event)">
+                <input type="text" id="purchase-drug-name" placeholder="Drug Name" required class="border rounded px-2 py-1 mb-2 w-full"/>
+                <input type="text" id="purchase-dosage" placeholder="Dosage" required class="border rounded px-2 py-1 mb-2 w-full"/>
+                <input type="number" id="purchase-original-price" placeholder="Original Price" required class="border rounded px-2 py-1 mb-2 w-full"/>
+                <input type="number" id="purchase-sell-price" placeholder="Sell Price" required class="border rounded px-2 py-1 mb-2 w-full"/>
+                <input type="number" id="purchase-quantity" placeholder="Quantity Purchased" required class="border rounded px-2 py-1 mb-2 w-full"/>
+                <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded">Add Purchase</button>
+            </form>
+            <ul id="purchase-list" class="mt-4"></ul>
+        </div>
+
+        <div id="reports" class="section hidden">
+            <h2 class="text-lg font-semibold mb-2">Reports</h2>
+            <div id="sales-report" class="mb-4"></div>
+            <div id="purchases-report"></div>
+        </div>
+    </div>
+
+    <script>
+        function showSection(section) {
+            document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
+            document.getElementById(section).classList.remove('hidden');
+            updateReports();
+        }
+
+        function addSale(event) {
+            event.preventDefault();
+            const drugName = document.getElementById('sale-drug-name').value;
+            const quantity = parseInt(document.getElementById('sale-quantity').value);
+
+            const sales = JSON.parse(localStorage.getItem('sales')) || [];
+            sales.push({ drugName, quantity });
+            localStorage.setItem('sales', JSON.stringify(sales));
+            document.getElementById('sales-form').reset();
+            updateSalesList();
+        }
+
+        function addPurchase(event) {
+            event.preventDefault();
+            const drugName = document.getElementById('purchase-drug-name').value;
+            const dosage = document.getElementById('purchase-dosage').value;
+            const originalPrice = parseFloat(document.getElementById('purchase-original-price').value);
+            const sellPrice = parseFloat(document.getElementById('purchase-sell-price').value);
+            const quantity = parseInt(document.getElementById('purchase-quantity').value);
+
+            const purchases = JSON.parse(localStorage.getItem('purchases')) || [];
+            purchases.push({ drugName, dosage, originalPrice, sellPrice, quantity });
+            localStorage.setItem('purchases', JSON.stringify(purchases));
+            document.getElementById('purchase-form').reset();
+            updatePurchasesList();
+        }
+
+        function updateSalesList() {
+            const sales = JSON.parse(localStorage.getItem('sales')) || [];
+            const salesList = document.getElementById('sales-list');
+            salesList.innerHTML = sales.map((sale, index) => `<li>${index + 1} - ${sale.drugName} : ${sale.quantity} sold</li>`).join('');
+        }
+
+        function updatePurchasesList() {
+            const purchases = JSON.parse(localStorage.getItem('purchases')) || [];
+            const purchaseList = document.getElementById('purchase-list');
+            purchaseList.innerHTML = purchases.map((purchase, index) => `<li>${index + 1} - ${purchase.drugName}, ${purchase.dosage}, Original: ${purchase.originalPrice} SDG, Sell: ${purchase.sellPrice} SDG, Quantity: ${purchase.quantity}</li>`).join('');
+        }
+
+        function updateReports() {
+            const sales = JSON.parse(localStorage.getItem('sales')) || [];
+            const purchases = JSON.parse(localStorage.getItem('purchases')) || [];
+
+            const salesTotal = sales.reduce((sum, sale) => sum + sale.quantity, 0);
+            const purchaseTotal = purchases.reduce((sum, purchase) => sum + purchase.originalPrice * purchase.quantity, 0);
+            const revenueTotal = purchases.reduce((sum, purchase) => sum + purchase.sellPrice * purchase.quantity, 0);
+            const netProfit = revenueTotal - purchaseTotal;
+
+            document.getElementById('sales-report').innerHTML = `Total Sales: ${salesTotal}`;
+            document.getElementById('purchases-report').innerHTML = `Total Revenue: ${revenueTotal.toFixed(2)} SDG<br>Total Expenses: ${purchaseTotal.toFixed(2)} SDG<br>Net Profit: ${netProfit.toFixed(2)} SDG`;
+        }
+
+        // Initialize by showing the sales section
+        showSection('sales');
+    </script>
+</body>
+</html>
